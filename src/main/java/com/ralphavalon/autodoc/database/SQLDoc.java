@@ -3,20 +3,27 @@ package com.ralphavalon.autodoc.database;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.Arrays;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
+
+import com.ralphavalon.autodoc.args.Args;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Component
 @Slf4j
+@Order(2)
 public class SQLDoc implements CommandLineRunner {
+	
+	@Autowired
+	private Args parsedArgs;
 
 	@Override
 	public void run(String... args) throws Exception {
-		Process proc = execute(getCommands(args));
+		Process proc = execute(getCommands(parsedArgs));
 
 		try(InputStreamReader infoOutput = new InputStreamReader(proc.getInputStream());
 			InputStreamReader errorOutput = new InputStreamReader(proc.getErrorStream());
@@ -33,8 +40,8 @@ public class SQLDoc implements CommandLineRunner {
 		return Runtime.getRuntime().exec(commands);
 	}
 	
-	private String[] getCommands(String... args) {
-		return new String[] {"java", "-jar", args[0], "-configFile", "application-test.properties"};
+	private String[] getCommands(Args parsedArgs) {
+		return new String[] {"java", "-jar", parsedArgs.getSchemaSpyJar(), "-configFile", parsedArgs.getPropertiesFile()};
 	}
 
 }
