@@ -10,6 +10,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import com.ralphavalon.autodoc.args.Args;
+import com.ralphavalon.autodoc.validator.Validator;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -20,19 +21,27 @@ public class SQLDoc implements CommandLineRunner {
 	
 	@Autowired
 	private Args parsedArgs;
+	
+	@Autowired
+	private Validator validator;
 
 	@Override
 	public void run(String... args) throws Exception {
-		Process proc = execute(getCommands(parsedArgs));
-
-		try(InputStreamReader infoOutput = new InputStreamReader(proc.getInputStream());
-			InputStreamReader errorOutput = new InputStreamReader(proc.getErrorStream());
-			BufferedReader stdInput = new BufferedReader(infoOutput);
-			BufferedReader stdError = new BufferedReader(errorOutput)) {
-			
-			stdInput.lines().forEach(log::info);
-			stdInput.lines().forEach(log::error);
-			
+		try {
+			if(validator.isValidArgs(parsedArgs)) {
+				Process proc = execute(getCommands(parsedArgs));
+				
+				try(InputStreamReader infoOutput = new InputStreamReader(proc.getInputStream());
+					InputStreamReader errorOutput = new InputStreamReader(proc.getErrorStream());
+					BufferedReader stdInput = new BufferedReader(infoOutput);
+					BufferedReader stdError = new BufferedReader(errorOutput)) {
+					
+					stdInput.lines().forEach(log::info);
+					stdInput.lines().forEach(log::error);
+				}
+			}
+		} catch (IllegalArgumentException e) {
+			log.error(e.getMessage());
 		}
 	}
 
